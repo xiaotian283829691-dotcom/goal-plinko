@@ -196,9 +196,10 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'center',
     width: '100%',
-    flex: 1,
+    flex: '1 1 0',
     overflow: 'hidden',
     minHeight: 0,
+    maxHeight: '62vh',
   },
   canvas: {
     display: 'block',

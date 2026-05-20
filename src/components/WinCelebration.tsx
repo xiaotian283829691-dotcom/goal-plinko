@@ -47,8 +47,8 @@ export function WinCelebration() {
       setFadeOut(false);
       const t = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setActive(null), 400);
-      }, 2000);
+        setTimeout(() => setActive(null), 300);
+      }, 800);
       return () => clearTimeout(t);
     }
   }, [history]);
@@ -60,8 +60,8 @@ export function WinCelebration() {
       setFadeOut(false);
       const t = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setActive(null), 400);
-      }, 1500);
+        setTimeout(() => setActive(null), 300);
+      }, 600);
       return () => clearTimeout(t);
     }
     if (streak === 0) {
