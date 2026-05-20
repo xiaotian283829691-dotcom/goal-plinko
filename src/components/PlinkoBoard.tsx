@@ -29,7 +29,7 @@ export function PlinkoBoard() {
     // Set canvas size
     const dpr = window.devicePixelRatio || 1;
     const displayWidth = Math.min(390, window.innerWidth - 2);
-    const displayHeight = 520;
+    const displayHeight = 400;
 
     canvas.style.width = displayWidth + 'px';
     canvas.style.height = displayHeight + 'px';
@@ -176,6 +176,9 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'center',
     width: '100%',
+    flex: 1,
+    overflow: 'hidden',
+    minHeight: 0,
   },
   canvas: {
     display: 'block',

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMatchStore } from '../store/matchStore';
+import { soundManager } from '../engine/sound';
 
 export function GoalRush() {
   const goalRushActive = useMatchStore((s) => s.goalRushActive);
@@ -10,6 +11,7 @@ export function GoalRush() {
     if (goalRushActive) {
       setVisible(true);
       setFadeOut(false);
+      soundManager.playGoalRush();
       const timer = setTimeout(() => {
         setFadeOut(true);
         setTimeout(() => setVisible(false), 500);
@@ -26,6 +28,7 @@ export function GoalRush() {
         ...styles.overlay,
         opacity: fadeOut ? 0 : 1,
         transition: 'opacity 0.5s ease-out',
+        animation: 'screenShake 0.5s ease-in-out',
       }}
     >
       <img

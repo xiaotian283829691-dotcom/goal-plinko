@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { type RiskLevel, type RowCount } from '../config/multipliers';
 import { CREDIT_BET_OPTIONS, FREE_CREDITS } from '../config/game';
+import { soundManager } from '../engine/sound';
 
 export interface ResultEntry {
   multiplier: number;
@@ -30,6 +31,9 @@ interface GameState {
 
   // Active balls count
   activeBalls: number;
+
+  // Win streak tracking
+  streak: number;
 
   // Actions
   setBetAmount: (amount: number) => void;
@@ -65,6 +69,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   history: [],
   totalProfit: 0,
   activeBalls: 0,
+  streak: 0,
 
   setBetAmount: (amount) => set({ betAmount: amount }),
   setRiskLevel: (risk) => set({ riskLevel: risk }),
@@ -77,6 +82,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       balance: FREE_CREDITS,
       totalProfit: 0,
       history: [],
+      streak: 0,
     });
   },
 
@@ -92,7 +98,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   onResult: (multiplier) => {
-    const { betAmount, balance, history, totalProfit, activeBalls } = get();
+    const { betAmount, balance, history, totalProfit, activeBalls, streak } = get();
     const payout = +(betAmount * multiplier).toFixed(4);
     const profit = +(payout - betAmount).toFixed(4);
     const isWin = multiplier >= 1;
@@ -104,11 +110,20 @@ export const useGameStore = create<GameState>((set, get) => ({
       timestamp: Date.now(),
     };
 
+    // Update streak
+    const newStreak = isWin ? streak + 1 : 0;
+
+    // Play streak sound when hitting 3 wins in a row
+    if (newStreak === 3) {
+      soundManager.playStreakSound();
+    }
+
     set({
       balance: +(balance + payout).toFixed(4),
       totalProfit: +(totalProfit + profit).toFixed(4),
       history: [entry, ...history].slice(0, 50),
       activeBalls: Math.max(0, activeBalls - 1),
+      streak: newStreak,
     });
   },
 

@@ -1,16 +1,28 @@
 import { useGameStore } from '../store/gameStore';
+import { useMatchStore, TEAM_INFO } from '../store/matchStore';
+import { TipButton } from './TipButton';
 
-export function Header() {
+interface HeaderProps {
+  onLogoClick: () => void;
+}
+
+export function Header({ onLogoClick }: HeaderProps) {
   const balance = useGameStore((s) => s.balance);
   const totalProfit = useGameStore((s) => s.totalProfit);
   const resetBalance = useGameStore((s) => s.resetBalance);
+  const selectedTeam = useMatchStore((s) => s.selectedTeam);
 
   const showRefill = balance < 1;
 
   return (
     <div style={styles.container}>
-      <div style={styles.left}>
+      <div style={styles.left} onClick={onLogoClick}>
         <img src="/images/logo.png" alt="Goal Plinko" style={styles.logo} />
+        {selectedTeam && (
+          <span style={styles.teamFlag}>
+            {TEAM_INFO[selectedTeam].flag}
+          </span>
+        )}
       </div>
       <div style={styles.right}>
         <div style={styles.balanceBox}>
@@ -28,9 +40,10 @@ export function Header() {
         </div>
         {showRefill && (
           <button onClick={resetBalance} style={styles.refillBtn}>
-            +30 Credits
+            +30
           </button>
         )}
+        <TipButton />
       </div>
     </div>
   );
@@ -41,23 +54,27 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '8px 12px',
+    padding: '4px 8px',
     background: '#111111',
     borderBottom: '1px solid #222',
   },
   left: {
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
+    cursor: 'pointer',
   },
   logo: {
-    height: 36,
+    height: 28,
     objectFit: 'contain',
+  },
+  teamFlag: {
+    fontSize: 14,
   },
   right: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   balanceBox: {
     display: 'flex',
@@ -69,7 +86,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#888',
   },
   balanceValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 700,
     color: '#fff',
     display: 'flex',
@@ -77,22 +94,22 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 3,
   },
   creditIcon: {
-    fontSize: 12,
+    fontSize: 11,
   },
   profitBox: {
     fontSize: 11,
     fontWeight: 600,
-    padding: '3px 6px',
+    padding: '2px 5px',
     borderRadius: 4,
     background: '#1a1a1a',
   },
   refillBtn: {
-    padding: '6px 10px',
+    padding: '4px 8px',
     borderRadius: 6,
     border: '1px solid #44cc44',
     background: 'rgba(68, 204, 68, 0.1)',
     color: '#44cc44',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 700,
     cursor: 'pointer',
     whiteSpace: 'nowrap',

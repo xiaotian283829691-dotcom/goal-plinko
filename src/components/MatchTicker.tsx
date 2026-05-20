@@ -39,7 +39,7 @@ export function MatchTicker() {
 const styles: Record<string, React.CSSProperties> = {
   container: {
     background: 'linear-gradient(90deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%)',
-    padding: '6px 12px',
+    padding: '3px 8px',
     borderBottom: '1px solid #333',
     overflow: 'hidden',
   },
@@ -47,8 +47,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    fontSize: 12,
+    gap: 6,
+    fontSize: 11,
     fontWeight: 600,
     color: '#fff',
   },
@@ -62,8 +62,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   status: {
     color: '#aaa',
-    fontSize: 11,
-    minWidth: 28,
+    fontSize: 10,
+    minWidth: 24,
   },
   team: {
     maxWidth: 80,
@@ -72,10 +72,10 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
   },
   score: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 800,
     color: '#d4a853',
-    padding: '0 4px',
+    padding: '0 3px',
   },
   rushBadge: {
     background: 'linear-gradient(135deg, #ff4d00, #ff003f)',

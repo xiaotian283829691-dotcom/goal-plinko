@@ -26,6 +26,17 @@ export interface BallResult {
   multiplier: number;
 }
 
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  radius: number;
+}
+
 export type OnBallLand = (result: BallResult) => void;
 
 export class PlinkoEngine {
@@ -67,14 +78,22 @@ export class PlinkoEngine {
   private _teamBallSrc: string | null = null;
   private _multiplierBoost: number = 1;
 
+  // Particle system
+  private particles: Particle[] = [];
+  private static MAX_PARTICLES = 50;
+
+  // Screen flash effect
+  private _flashAlpha = 0;
+  private _flashColor = '#ffffff';
+
   // Layout constants
   static WIDTH = 390;
-  static HEIGHT = 520;
+  static HEIGHT = 400;
   private static PADDING_X = 30;
-  private static PADDING_TOP = 30;
-  private static PADDING_BOTTOM = 50;
+  private static PADDING_TOP = 20;
+  private static PADDING_BOTTOM = 38;
   private static PIN_RADIUS = 3;
-  private static MAX_BALL_RADIUS = 8;
+  private static MAX_BALL_RADIUS = 7;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -232,6 +251,57 @@ export class PlinkoEngine {
     Matter.Engine.clear(this.engine);
   }
 
+  // --- Particle system ---
+
+  spawnParticles(x: number, y: number, count: number, color: string) {
+    const available = PlinkoEngine.MAX_PARTICLES - this.particles.length;
+    const toSpawn = Math.min(count, available);
+    for (let i = 0; i < toSpawn; i++) {
+      const angle = (Math.PI * 2 * i) / toSpawn + (Math.random() - 0.5) * 0.5;
+      const speed = 1.5 + Math.random() * 3;
+      this.particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2, // bias upward
+        life: 40,
+        maxLife: 40,
+        color,
+        radius: 1.5 + Math.random() * 2.5,
+      });
+    }
+  }
+
+  private updateParticles() {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.05; // gravity
+      p.life--;
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+  }
+
+  private drawParticles(ctx: CanvasRenderingContext2D) {
+    for (const p of this.particles) {
+      const alpha = p.life / p.maxLife;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius * alpha, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  triggerScreenFlash(color: string) {
+    this._flashAlpha = 0.4;
+    this._flashColor = color;
+  }
+
   // --- Private ---
 
   private buildLayout() {
@@ -362,14 +432,29 @@ export class PlinkoEngine {
     if (binIndex >= coords.length) binIndex = coords.length - 1;
 
     const multipliers = MULTIPLIERS[this._rows][this._risk];
-    // Bins = rows+1, but coords has rows+2 pins for last row.
-    // Actually last row has (3 + rows - 1) = rows+2 pins, giving rows+1 gaps = bins.
-    // The findIndex above finds which gap the ball is in.
     const multIndex = Math.min(binIndex, multipliers.length - 1);
     const multiplier = multipliers[multIndex] * this._multiplierBoost;
 
-    // Play result sound
-    if (multiplier >= 1) {
+    // Play result sound + spawn particles for big wins
+    if (multiplier >= 10) {
+      soundManager.playMegaWin();
+      // Big particle burst + screen flash for jackpot
+      const slotX = coords.length > 1 && multIndex < coords.length - 1
+        ? (coords[multIndex] + coords[multIndex + 1]) / 2
+        : coords[coords.length - 1];
+      const slotY = this.canvas.height - PlinkoEngine.PADDING_BOTTOM + 18;
+      this.spawnParticles(slotX, slotY, 30, '#ff003f');
+      this.spawnParticles(slotX, slotY, 15, '#ffaa00');
+      this.triggerScreenFlash('#ffffff');
+    } else if (multiplier >= 5) {
+      soundManager.playBigWin();
+      // Particle burst for big win
+      const slotX = coords.length > 1 && multIndex < coords.length - 1
+        ? (coords[multIndex] + coords[multIndex + 1]) / 2
+        : coords[coords.length - 1];
+      const slotY = this.canvas.height - PlinkoEngine.PADDING_BOTTOM + 18;
+      this.spawnParticles(slotX, slotY, 20, '#ffaa00');
+    } else if (multiplier >= 1) {
       soundManager.playWin(multiplier);
     } else {
       soundManager.playLoss();
@@ -437,6 +522,20 @@ export class PlinkoEngine {
     for (const [, entry] of this.balls) {
       this.drawBall(ctx, entry.body);
     }
+
+    // Update and draw particles
+    this.updateParticles();
+    this.drawParticles(ctx);
+
+    // Screen flash effect
+    if (this._flashAlpha > 0) {
+      ctx.globalAlpha = this._flashAlpha;
+      ctx.fillStyle = this._flashColor;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
+      this._flashAlpha -= 0.02;
+      if (this._flashAlpha < 0) this._flashAlpha = 0;
+    }
   }
 
   private drawBall(ctx: CanvasRenderingContext2D, ball: Matter.Body) {
@@ -471,7 +570,7 @@ export class PlinkoEngine {
 
     const slotWidth = coords.length > 1 ? (coords[1] - coords[0]) * 0.85 : 30;
     const slotHeight = slotWidth * 0.75;
-    const slotY = this.canvas.height - PlinkoEngine.PADDING_BOTTOM + 18;
+    const slotY = this.canvas.height - PlinkoEngine.PADDING_BOTTOM + 14;
 
     for (let i = 0; i < multipliers.length; i++) {
       const mult = multipliers[i];

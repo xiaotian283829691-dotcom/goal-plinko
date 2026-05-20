@@ -58,7 +58,7 @@ export function Controls() {
         </div>
       </div>
 
-      {/* Risk Level */}
+      {/* Risk + Rows on same row */}
       <div style={styles.row}>
         <span style={styles.label}>Risk</span>
         <div style={styles.chipRow}>
@@ -75,11 +75,7 @@ export function Controls() {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Rows */}
-      <div style={styles.row}>
-        <span style={styles.label}>Rows</span>
+        <span style={{ ...styles.label, marginLeft: 6 }}>Rows</span>
         <div style={styles.chipRow}>
           {ROW_OPTIONS.map((r) => (
             <button
@@ -96,14 +92,13 @@ export function Controls() {
         </div>
       </div>
 
-      {/* Mode Toggle + Auto Count */}
-      <div style={styles.row}>
-        <span style={styles.label}>Mode</span>
-        <div style={styles.chipRow}>
+      {/* Mode Toggle + Auto Count + Drop Button on same row */}
+      <div style={styles.bottomRow}>
+        <div style={styles.modeGroup}>
           <button
             onClick={() => setMode('manual')}
             style={{
-              ...styles.chip,
+              ...styles.modeChip,
               ...(mode === 'manual' ? styles.chipActive : {}),
             }}
           >
@@ -112,7 +107,7 @@ export function Controls() {
           <button
             onClick={() => setMode('auto')}
             style={{
-              ...styles.chip,
+              ...styles.modeChip,
               ...(mode === 'auto' ? styles.chipActive : {}),
             }}
           >
@@ -130,67 +125,72 @@ export function Controls() {
             />
           )}
         </div>
-      </div>
 
-      {/* Drop Button or Refill Button */}
-      {outOfCredits && !autoRunning ? (
-        <button onClick={resetBalance} style={styles.refillButton}>
-          +30 Free Credits
-        </button>
-      ) : (
-        <button
-          onClick={handleDropBall}
-          disabled={!canBet && !autoRunning}
-          style={{
-            ...styles.dropButton,
-            opacity: canBet || autoRunning ? 1 : 0.4,
-            background: autoRunning ? '#cc3333' : '#d4a853',
-          }}
-        >
-          {autoRunning
-            ? `STOP (${autoRemaining})`
-            : mode === 'auto'
-              ? 'START AUTO'
-              : 'DROP BALL'}
-        </button>
-      )}
+        {/* Drop Button or Refill Button */}
+        {outOfCredits && !autoRunning ? (
+          <button onClick={resetBalance} style={styles.refillButton}>
+            +30 Credits
+          </button>
+        ) : (
+          <button
+            onClick={handleDropBall}
+            disabled={!canBet && !autoRunning}
+            style={{
+              ...styles.dropButton,
+              opacity: canBet || autoRunning ? 1 : 0.4,
+              background: autoRunning ? '#cc3333' : '#d4a853',
+            }}
+          >
+            {autoRunning
+              ? `STOP (${autoRemaining})`
+              : mode === 'auto'
+                ? 'START'
+                : 'DROP BALL'}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    padding: '12px 16px',
+    padding: '6px 10px 8px',
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 5,
   },
   row: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+  },
+  bottomRow: {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#888',
-    width: 36,
+    width: 28,
     flexShrink: 0,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   chipRow: {
     display: 'flex',
-    gap: 6,
+    gap: 4,
     flexWrap: 'wrap',
     alignItems: 'center',
   },
   chip: {
-    padding: '6px 10px',
-    borderRadius: 6,
+    padding: '4px 8px',
+    borderRadius: 5,
     border: '1px solid #333',
     background: '#1a1a1a',
     color: '#ccc',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.15s',
@@ -200,43 +200,58 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#000',
     borderColor: '#d4a853',
   },
+  modeGroup: {
+    display: 'flex',
+    gap: 4,
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  modeChip: {
+    padding: '4px 8px',
+    borderRadius: 5,
+    border: '1px solid #333',
+    background: '#1a1a1a',
+    color: '#ccc',
+    fontSize: 10,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  },
   autoInput: {
-    width: 50,
-    padding: '6px 8px',
-    borderRadius: 6,
+    width: 40,
+    padding: '4px 6px',
+    borderRadius: 5,
     border: '1px solid #333',
     background: '#1a1a1a',
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     textAlign: 'center' as const,
   },
   dropButton: {
-    marginTop: 4,
-    padding: '14px 0',
-    borderRadius: 10,
+    flex: 1,
+    padding: '10px 0',
+    borderRadius: 8,
     border: 'none',
     background: '#d4a853',
     color: '#000',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 800,
     letterSpacing: 2,
     cursor: 'pointer',
     textTransform: 'uppercase' as const,
     transition: 'all 0.15s',
-    width: '100%',
   },
   refillButton: {
-    marginTop: 4,
-    padding: '14px 0',
-    borderRadius: 10,
+    flex: 1,
+    padding: '10px 0',
+    borderRadius: 8,
     border: '2px solid #44cc44',
     background: 'rgba(68, 204, 68, 0.1)',
     color: '#44cc44',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 800,
     letterSpacing: 1,
     cursor: 'pointer',
-    width: '100%',
     transition: 'all 0.15s',
   },
 };

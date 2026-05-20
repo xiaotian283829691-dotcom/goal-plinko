@@ -1,21 +1,36 @@
-/**
- * Procedural sound manager using Web Audio API.
- * No external audio files needed.
- */
-
 class SoundManager {
   private ctx: AudioContext | null = null;
   private enabled = true;
+  private audioCache: Map<string, HTMLAudioElement> = new Map();
 
   private getContext(): AudioContext {
     if (!this.ctx) {
       this.ctx = new AudioContext();
     }
-    // Resume if suspended (browser autoplay policy)
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
     return this.ctx;
+  }
+
+  private playFile(src: string) {
+    if (!this.enabled) return;
+    let audio = this.audioCache.get(src);
+    if (!audio) {
+      audio = new Audio(src);
+      this.audioCache.set(src, audio);
+    }
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
+
+  preload() {
+    const files = ['/sounds/big-win.mp3', '/sounds/mega-win.mp3', '/sounds/streak.mp3', '/sounds/red-card.mp3', '/sounds/goal-rush.mp3'];
+    files.forEach(src => {
+      const a = new Audio(src);
+      a.preload = 'auto';
+      this.audioCache.set(src, a);
+    });
   }
 
   toggle(on?: boolean) {
@@ -50,7 +65,11 @@ class SoundManager {
     const ctx = this.getContext();
 
     if (multiplier >= 10) {
-      this.playJackpot();
+      this.playMegaWin();
+      return;
+    }
+    if (multiplier >= 5) {
+      this.playBigWin();
       return;
     }
 
@@ -93,31 +112,11 @@ class SoundManager {
     osc.stop(ctx.currentTime + 0.2);
   }
 
-  /**
-   * Jackpot / big win — celebratory chord (C major arpeggio).
-   */
-  private playJackpot() {
-    const ctx = this.getContext();
-    const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
-
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = 'triangle';
-      osc.frequency.value = freq;
-
-      const startTime = ctx.currentTime + i * 0.08;
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.1, startTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + 0.4);
-    });
-  }
+  playBigWin() { this.playFile('/sounds/big-win.mp3'); }
+  playMegaWin() { this.playFile('/sounds/mega-win.mp3'); }
+  playStreakSound() { this.playFile('/sounds/streak.mp3'); }
+  playRedCard() { this.playFile('/sounds/red-card.mp3'); }
+  playGoalRush() { this.playFile('/sounds/goal-rush.mp3'); }
 }
 
 export const soundManager = new SoundManager();
