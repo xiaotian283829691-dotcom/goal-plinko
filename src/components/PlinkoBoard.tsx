@@ -6,9 +6,12 @@ import { ResultHistory } from './ResultHistory';
 import { useTelegram } from '../hooks/useTelegram';
 
 export function PlinkoBoard() {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<PlinkoEngine | null>(null);
+  const virtualCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const autoTimerRef = useRef<number>(0);
+  const sizeRef = useRef({ w: 0, h: 0 });
 
   const rows = useGameStore((s) => s.rows);
   const riskLevel = useGameStore((s) => s.riskLevel);
@@ -24,12 +27,12 @@ export function PlinkoBoard() {
   // Initialize engine
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const wrapper = wrapperRef.current;
+    if (!canvas || !wrapper) return;
 
-    // Set canvas size
     const dpr = window.devicePixelRatio || 1;
-    const displayWidth = Math.min(390, window.innerWidth - 2);
-    const displayHeight = 400;
+    const displayWidth = Math.min(420, wrapper.clientWidth);
+    const displayHeight = wrapper.clientHeight;
 
     canvas.style.width = displayWidth + 'px';
     canvas.style.height = displayHeight + 'px';
@@ -39,16 +42,15 @@ export function PlinkoBoard() {
     const ctx = canvas.getContext('2d')!;
     ctx.scale(dpr, dpr);
 
-    // Virtual canvas at display resolution for Matter.js engine
     const virtualCanvas = document.createElement('canvas');
     virtualCanvas.width = displayWidth;
     virtualCanvas.height = displayHeight;
+    virtualCanvasRef.current = virtualCanvas;
+    sizeRef.current = { w: displayWidth, h: displayHeight };
 
     const engine = new PlinkoEngine(virtualCanvas);
     engine.setOnBallLand((result) => {
       onResult(result.multiplier);
-
-      // Haptic feedback based on result
       if (result.multiplier >= 2) {
         haptic.success();
       } else if (result.multiplier < 0.5) {
@@ -56,7 +58,6 @@ export function PlinkoBoard() {
       }
     });
 
-    // Hook into pin collision for haptic
     engine.setOnPinHit(() => {
       haptic.medium();
     });
@@ -64,16 +65,35 @@ export function PlinkoBoard() {
     engine.start();
     engineRef.current = engine;
 
-    // Render loop: copy virtual canvas to real HiDPI canvas
     let animId = 0;
     const renderToReal = () => {
-      ctx.clearRect(0, 0, displayWidth, displayHeight);
+      const { w, h } = sizeRef.current;
+      ctx.clearRect(0, 0, w, h);
       ctx.drawImage(virtualCanvas, 0, 0);
       animId = requestAnimationFrame(renderToReal);
     };
     renderToReal();
 
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const newW = Math.min(420, Math.floor(entry.contentRect.width));
+      const newH = Math.floor(entry.contentRect.height);
+      if (newW === sizeRef.current.w && newH === sizeRef.current.h) return;
+      sizeRef.current = { w: newW, h: newH };
+      canvas.style.width = newW + 'px';
+      canvas.style.height = newH + 'px';
+      canvas.width = newW * dpr;
+      canvas.height = newH * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      virtualCanvas.width = newW;
+      virtualCanvas.height = newH;
+      engine.resize(newW, newH);
+    });
+    ro.observe(wrapper);
+
     return () => {
+      ro.disconnect();
       cancelAnimationFrame(animId);
       engine.destroy();
       engineRef.current = null;
@@ -159,7 +179,7 @@ export function PlinkoBoard() {
   }, [handleDrop]);
 
   return (
-    <div style={styles.wrapper}>
+    <div ref={wrapperRef} style={styles.wrapper}>
       <ResultHistory />
       <canvas
         ref={canvasRef}

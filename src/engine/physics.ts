@@ -150,6 +150,13 @@ export class PlinkoEngine {
     this._risk = risk;
   }
 
+  resize(width: number, height: number) {
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.removeAllBalls();
+    this.buildLayout();
+  }
+
   setTeamBall(src: string | null) {
     if (src === this._teamBallSrc) return;
     this._teamBallSrc = src;
