@@ -53,8 +53,8 @@ export function WinCelebration() {
       setFadeOut(false);
       const t = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setActive(null), 250);
-      }, 700);
+        setTimeout(() => setActive(null), 150);
+      }, 500);
       return () => clearTimeout(t);
     }
   }, [history]);
@@ -68,8 +68,8 @@ export function WinCelebration() {
       setFadeOut(false);
       const t = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setActive(null), 250);
-      }, 500);
+        setTimeout(() => setActive(null), 150);
+      }, 400);
       return () => clearTimeout(t);
     }
     if (streak === 0) {
@@ -77,12 +77,17 @@ export function WinCelebration() {
     }
   }, [streak]);
 
+  const dismiss = () => {
+    setFadeOut(true);
+    setTimeout(() => setActive(null), 150);
+  };
+
   if (!active) return null;
 
   const cfg = CELEB_CONFIG[active];
 
   return (
-    <div style={{
+    <div onClick={dismiss} style={{
       position: 'fixed',
       inset: 0,
       display: 'flex',
@@ -90,7 +95,8 @@ export function WinCelebration() {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 180,
-      pointerEvents: 'none',
+      pointerEvents: 'auto',
+      cursor: 'pointer',
       background: 'radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%)',
       opacity: fadeOut ? 0 : 1,
       transition: 'opacity 0.25s ease-out',
