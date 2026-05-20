@@ -21,6 +21,8 @@ const CELEB_CONFIG: Record<CelebType, { src: string; glow: string; label: string
   },
 };
 
+const COOLDOWN_MS = 5000;
+
 export function WinCelebration() {
   const history = useGameStore((s) => s.history);
   const streak = useGameStore((s) => s.streak);
@@ -28,12 +30,15 @@ export function WinCelebration() {
   const [fadeOut, setFadeOut] = useState(false);
   const lastTimestamp = useRef(0);
   const lastStreakShown = useRef(0);
+  const lastShownAt = useRef(0);
 
   useEffect(() => {
     if (history.length === 0) return;
     const latest = history[0];
     if (latest.timestamp <= lastTimestamp.current) return;
     lastTimestamp.current = latest.timestamp;
+
+    if (Date.now() - lastShownAt.current < COOLDOWN_MS) return;
 
     let type: CelebType | null = null;
     if (latest.multiplier >= 10) {
@@ -43,12 +48,13 @@ export function WinCelebration() {
     }
 
     if (type) {
+      lastShownAt.current = Date.now();
       setActive(type);
       setFadeOut(false);
       const t = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setActive(null), 300);
-      }, 800);
+        setTimeout(() => setActive(null), 250);
+      }, 700);
       return () => clearTimeout(t);
     }
   }, [history]);
@@ -56,12 +62,14 @@ export function WinCelebration() {
   useEffect(() => {
     if (streak >= 3 && streak !== lastStreakShown.current) {
       lastStreakShown.current = streak;
+      if (Date.now() - lastShownAt.current < COOLDOWN_MS) return;
+      lastShownAt.current = Date.now();
       setActive('streak');
       setFadeOut(false);
       const t = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setActive(null), 300);
-      }, 600);
+        setTimeout(() => setActive(null), 250);
+      }, 500);
       return () => clearTimeout(t);
     }
     if (streak === 0) {
@@ -83,29 +91,29 @@ export function WinCelebration() {
       justifyContent: 'center',
       zIndex: 180,
       pointerEvents: 'none',
-      background: 'radial-gradient(circle, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%)',
+      background: 'radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%)',
       opacity: fadeOut ? 0 : 1,
-      transition: 'opacity 0.4s ease-out',
+      transition: 'opacity 0.25s ease-out',
     }}>
       <img
         src={cfg.src}
         alt={cfg.label}
         style={{
-          width: active === 'streak' ? '40%' : '60%',
-          maxWidth: active === 'streak' ? 160 : 260,
+          width: active === 'streak' ? '35%' : '50%',
+          maxWidth: active === 'streak' ? 140 : 220,
           height: 'auto',
           objectFit: 'contain',
-          filter: `drop-shadow(0 0 20px ${cfg.glow})`,
-          animation: 'celebBounce 0.5s ease-out',
+          filter: `drop-shadow(0 0 16px ${cfg.glow})`,
+          animation: 'celebBounce 0.4s ease-out',
         }}
       />
       <div style={{
-        marginTop: 8,
-        fontSize: 16,
+        marginTop: 6,
+        fontSize: 14,
         fontWeight: 800,
         color: '#fff',
         letterSpacing: 3,
-        textShadow: `0 0 10px ${cfg.glow}`,
+        textShadow: `0 0 8px ${cfg.glow}`,
       }}>
         {cfg.label}
       </div>
